@@ -51,9 +51,11 @@ def save_file():
         json.dump(data, file)
 
 # + 1
-def plus_death(event):
+def plus_death(event):  
     if selected_boss == None:
         print("Please select a boss or add a new one.")
+        return
+    
     else:
         bosses[selected_boss] = bosses[selected_boss] + 1
         save_file()
@@ -66,6 +68,7 @@ def min_death(event):
     
     if selected_boss == None:
         print("Please select a boss or add a new one.")
+        return
 
     else:
         bosses[selected_boss] = bosses[selected_boss] - 1
@@ -83,6 +86,7 @@ def switch_boss(operator):
         selected_boss = list(bosses)[0]
         data["saved_boss"] = selected_boss
         save_file()
+        print(f"Selected {selected_boss}. Deaths: {bosses[selected_boss]}")
         return
     
     boss_index = boss_indexer()
@@ -104,30 +108,29 @@ def switch_boss(operator):
     save_file()
 
 # add new boss
-def add_boss(event):    
-    global listening
-    listening = False
+def add_boss(event):
+    keyboard.unhook_key('3')    
     keyboard.send('backspace')
-    new_boss = input(f"Please enter a boss name (enter {"cancel"} to cancel): ")
+    new_boss = input(f"Please enter a boss name (enter cancel to cancel): ")
 
     if new_boss == "" or new_boss == "cancel":
-        listening = True
         print("Boss not added.")
+        keyboard.on_press_key('3', add_boss)
         return
     
     elif new_boss in bosses:
-        listening = True
-        print("Boss already exists.")
+        print(f"{new_boss} already exists. Please enter another boss name.")
+        keyboard.on_press_key('3', add_boss)
         return
     
     else:
-        listening = True
         bosses[new_boss] = 0
         global selected_boss
         selected_boss = new_boss
         print(new_boss, "added and selected.")
         data["saved_boss"] = selected_boss
         save_file()
+        keyboard.on_press_key('3', add_boss)
         return
 
 # list all bosses
@@ -138,26 +141,35 @@ def display_boss(event):
     
     print("----------List of Bosses----------")
     for boss in bosses:
-        print(f"{boss}{":"} {bosses[boss]} deaths.")
+        print(f"{boss}: {bosses[boss]} deaths.")
     print("----------------------------------")
 
 def rename_boss(event):
     if event.name == ('left'): # arrow keys trigger 2, 4, 6 and 8 as well.
         return
     
+    keyboard.unhook_key('3')
     global selected_boss
     if len(bosses) == 0:
         print("You don't have any bosses to rename.")
+        keyboard.on_press_key('4', rename_boss)
         return
     
-    if selected_boss == None:
+    elif selected_boss == None:
         print("Please select a boss to rename.")
+        keyboard.on_press_key('4', rename_boss)
         return
     
     new_name = input(f"Enter new boss name for {selected_boss} (enter cancel to cancel): ")
 
     if new_name == "cancel":
         print(f"{selected_boss} not renamed.")
+        keyboard.on_press_key('4', rename_boss)
+        return
+    
+    elif new_name in bosses:
+        print(f"{new_name} already exists. Please enter another boss name")
+        keyboard.on_press_key('4', rename_boss)
         return
     
     else:
@@ -167,6 +179,7 @@ def rename_boss(event):
         print(f"{selected_boss} renamed to {new_name}.")
         selected_boss = new_name
         data["saved_boss"] = selected_boss
+        keyboard.on_press_key('4', rename_boss)
         save_file()
 
 # delete boss
@@ -179,7 +192,7 @@ def delete_boss(event):
     if selected_boss == None:
         print("Please select a boss to delete.")
         return
-    confirmation = input(f"Are you sure you want to delete {selected_boss}? Type {"delete"} to confirm. ")
+    confirmation = input(f"Are you sure you want to delete {selected_boss}? Type delete to confirm. ")
 
     if confirmation != "delete":
         print(f"{selected_boss} was not deleted.")
