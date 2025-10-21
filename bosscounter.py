@@ -33,8 +33,10 @@ else:
 # how to print
 if selected_boss == None:
     print_selected_boss = "selected boss"
+    boss_deaths = None
 else:
     print_selected_boss = selected_boss
+    boss_deaths = bosses[selected_boss][0]
 
 # tutorial msg
 print(f"""Current boss selected: {selected_boss}
@@ -42,7 +44,8 @@ Press 1 to add death to {print_selected_boss}.
 Press 2 to remove death from {print_selected_boss}
 Press 3 to add a new boss.
 Press 4 to rename {print_selected_boss}.
-Press 5 to display bosses.
+Press 5 to mark {print_selected_boss} as hitless.
+Press 6 to display bosses.
 Press Ctrl + Alt + Left/Right arrow key to switch selected boss.
 Press Delete to delete {print_selected_boss}""")
 
@@ -57,9 +60,11 @@ def plus_death(event):
         return
     
     else:
-        bosses[selected_boss] = bosses[selected_boss] + 1
+        boss_deaths = bosses[selected_boss][0] + 1
+        boss_value = boss_deaths, bosses[selected_boss][1]
+        bosses[selected_boss] = boss_value
         save_file()
-        print(f"+1 death to {selected_boss}. Total deaths: {bosses[selected_boss]}")
+        print(f"+1 death to {selected_boss}. Total deaths: {boss_deaths}")
 
 # - 1
 def min_death(event):
@@ -71,9 +76,11 @@ def min_death(event):
         return
 
     else:
-        bosses[selected_boss] = bosses[selected_boss] - 1
+        boss_deaths = bosses[selected_boss][0] - 1
+        boss_value = boss_deaths, bosses[selected_boss][1]
+        bosses[selected_boss] = boss_value
         save_file()
-        print(f"-1 death from {selected_boss}. Total deaths: {bosses[selected_boss]}")
+        print(f"-1 death from {selected_boss}. Total deaths: {boss_deaths}")
 
 # cycle through bosses
 def switch_boss(operator):
@@ -86,7 +93,7 @@ def switch_boss(operator):
         selected_boss = list(bosses)[0]
         data["saved_boss"] = selected_boss
         save_file()
-        print(f"Selected {selected_boss}. Deaths: {bosses[selected_boss]}")
+        print(f"Selected {selected_boss}. Deaths: {boss_deaths}")
         return
     
     boss_index = boss_indexer()
@@ -103,84 +110,97 @@ def switch_boss(operator):
         else:
             selected_boss = list(bosses)[boss_index - 1]
 
-    print(f"Selected {selected_boss}. Deaths: {bosses[selected_boss]}")
+    print(f"Selected {selected_boss}. Deaths: {boss_deaths}")
     data["saved_boss"] = selected_boss
     save_file()
 
 # add new boss
-def add_boss(event):
-    keyboard.unhook_key('3')    
+def add_boss(event):  
     keyboard.send('backspace')
     new_boss = input(f"Please enter a boss name (enter cancel to cancel): ")
 
     if new_boss == "" or new_boss == "cancel":
         print("Boss not added.")
-        keyboard.on_press_key('3', add_boss)
         return
     
     elif new_boss in bosses:
         print(f"{new_boss} already exists. Please enter another boss name.")
-        keyboard.on_press_key('3', add_boss)
         return
     
     else:
-        bosses[new_boss] = 0
+        bosses[new_boss] = 0, "hit"
         global selected_boss
         selected_boss = new_boss
         print(new_boss, "added and selected.")
         data["saved_boss"] = selected_boss
         save_file()
-        keyboard.on_press_key('3', add_boss)
         return
-
-# list all bosses
-def display_boss(event):
-    if len(bosses) == 0:
-        print("You don't have any bosses added yet.")
-        return
-    
-    print("----------List of Bosses----------")
-    for boss in bosses:
-        print(f"{boss}: {bosses[boss]} deaths.")
-    print("----------------------------------")
 
 def rename_boss(event):
     if event.name == ('left'): # arrow keys trigger 2, 4, 6 and 8 as well.
         return
     
-    keyboard.unhook_key('3')
     global selected_boss
     if len(bosses) == 0:
         print("You don't have any bosses to rename.")
-        keyboard.on_press_key('4', rename_boss)
         return
     
     elif selected_boss == None:
         print("Please select a boss to rename.")
-        keyboard.on_press_key('4', rename_boss)
         return
     
     new_name = input(f"Enter new boss name for {selected_boss} (enter cancel to cancel): ")
 
     if new_name == "cancel":
         print(f"{selected_boss} not renamed.")
-        keyboard.on_press_key('4', rename_boss)
         return
     
     elif new_name in bosses:
         print(f"{new_name} already exists. Please enter another boss name")
-        keyboard.on_press_key('4', rename_boss)
         return
     
     else:
-        boss_deaths = bosses[selected_boss]
+        boss_value = bosses[selected_boss][0], bosses[selected_boss][1]
         bosses.pop(selected_boss)
-        bosses[new_name] = boss_deaths
+        bosses[new_name] = boss_value
         print(f"{selected_boss} renamed to {new_name}.")
         selected_boss = new_name
         data["saved_boss"] = selected_boss
-        keyboard.on_press_key('4', rename_boss)
         save_file()
+
+# mark boss as hitless
+def hitless_boss(event):
+    if selected_boss == None:
+        print("Please select a boss to mark as hitless.")
+        return
+    
+    if bosses[selected_boss][1] == "hitless":
+        boss_value = bosses[selected_boss][0], "hit"
+        bosses[selected_boss] = boss_value
+        print(f"Removed hitless mark from {selected_boss}. Git gud.")
+    else:
+        boss_value = bosses[selected_boss][0], "hitless"
+        bosses[selected_boss] = boss_value
+        print(f"{selected_boss} marked as hitless. Nice!")
+
+    save_file()
+
+# list all bosses
+def display_boss(event):
+    if event.name == ('right'): # arrow keys trigger 2, 4, 6 and 8 as well.
+        return
+    
+    if len(bosses) == 0:
+        print("You don't have any bosses added yet.")
+        return
+    
+    print("----------List of Bosses----------")
+    for boss in bosses:
+        hitless_question = "."
+        if bosses[boss][1] == "hitless":
+            hitless_question = ", done hitless!"
+        print(f"{boss}: {bosses[boss][0]} deaths{hitless_question}")
+    print("----------------------------------")
 
 # delete boss
 def delete_boss(event):
@@ -222,7 +242,8 @@ keyboard.add_hotkey('ctrl+alt+left', switch_boss, args=["-"])
 keyboard.add_hotkey('ctrl+alt+right', switch_boss, args=["+"])
 keyboard.on_press_key('3', add_boss)
 keyboard.on_press_key('4', rename_boss)
-keyboard.on_press_key('5', display_boss)
+keyboard.on_press_key('5', hitless_boss)
+keyboard.on_press_key('6', display_boss)
 keyboard.on_press_key('delete', delete_boss)
 
 def exit():
