@@ -20,12 +20,15 @@ def save_file():
     with open(filename, "w") as file:
         json.dump(data, file)
 
-first_boss = list(bosses)[0]
-for boss in bosses:
-    if isinstance(bosses[boss], int):
-        boss_value = bosses[boss], "hit"
-        bosses[boss] = boss_value
-save_file()
+if not "data_fixed" in data:
+    first_boss = list(bosses)[0]
+    for boss in bosses:
+        if isinstance(bosses[boss], int):
+            boss_value = bosses[boss], "hit"
+            bosses[boss] = boss_value
+    data["data_fixed"] = True
+    print("Boss data fixed.")
+    save_file()
 
 # who is our selected boss on startup?
 if len(bosses) == (0):
@@ -36,7 +39,7 @@ else:
         selected_boss = list(bosses)[0]
     else:
         selected_boss = data["saved_boss"]
-        # boss_deaths = bosses[selected_boss][0]
+        boss_deaths = bosses[selected_boss][0]
 
 # how to print
 if selected_boss == None:
