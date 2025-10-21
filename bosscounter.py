@@ -16,27 +16,33 @@ else: # else read existing file
 
 bosses = data["bosses"]
 
+def save_file():
+    with open(filename, "w") as file:
+        json.dump(data, file)
+
+first_boss = list(bosses)[0]
+for boss in bosses:
+    if isinstance(bosses[boss], int):
+        boss_value = bosses[boss], "hit"
+        bosses[boss] = boss_value
+save_file()
+
 # who is our selected boss on startup?
 if len(bosses) == (0):
     selected_boss = None
+    boss_deaths = None
 else:
     if data["saved_boss"] == None:
         selected_boss = list(bosses)[0]
     else:
-        for boss in bosses:
-            if boss == data["saved_boss"]:
-                selected_boss = data["saved_boss"]
-                break
-            else:
-                selected_boss = selected_boss = list(bosses)[0]
+        selected_boss = data["saved_boss"]
+        # boss_deaths = bosses[selected_boss][0]
 
 # how to print
 if selected_boss == None:
     print_selected_boss = "selected boss"
-    boss_deaths = None
 else:
     print_selected_boss = selected_boss
-    boss_deaths = bosses[selected_boss][0]
 
 # tutorial msg
 print(f"""Current boss selected: {selected_boss}
@@ -48,10 +54,6 @@ Press 5 to mark {print_selected_boss} as hitless.
 Press 6 to display bosses.
 Press Ctrl + Alt + Left/Right arrow key to switch selected boss.
 Press Delete to delete {print_selected_boss}""")
-
-def save_file():
-    with open(filename, "w") as file:
-        json.dump(data, file)
 
 # + 1
 def plus_death(event):  
@@ -174,6 +176,8 @@ def hitless_boss(event):
         print("Please select a boss to mark as hitless.")
         return
     
+    if bosses[selected_boss][1] == None:
+        print("It's none man")
     if bosses[selected_boss][1] == "hitless":
         boss_value = bosses[selected_boss][0], "hit"
         bosses[selected_boss] = boss_value
